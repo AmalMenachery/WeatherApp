@@ -53,6 +53,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<Location[]>([]);
 
+  // TODO: Move to fetchSuggestions() useWeather hook and switch between services
   const fetchSuggestions = async (text: string) => {
     try {
       const locationData = await fetchGeoLocFromWeatherAPI(text);
