@@ -1,12 +1,31 @@
 import React, { act } from "react";
-import { render, fireEvent } from "@testing-library/react-native";
+import { render, fireEvent, waitFor } from "@testing-library/react-native";
 import LocationSearch from "./LocationSearch";
-import * as WeatherAPI from "../services/WeatherApiService";
+import { fetchGeoLocFromWeatherAPI } from "../services/WeatherApiService";
 
-jest.mock("../services/WeatherApiService");
+jest.mock("../services/WeatherApiService", () => ({
+  getWeatherFromWeatherAPI: jest.fn(),
+  fetchGeoLocFromWeatherAPI: jest.fn().mockResolvedValue(LocationListMock),
+}));
 
-const mockFetchGeoLocFromWeatherAPI =
-  WeatherAPI.fetchGeoLocFromWeatherAPI as jest.Mock;
+const LocationListMock = [
+  {
+    id: 1,
+    name: "London",
+    region: "England",
+    country: "UK",
+    lat: 51.51,
+    lon: -0.13,
+  },
+  {
+    id: 2,
+    name: "Londonderry",
+    region: "Northern Ireland",
+    country: "UK",
+    lat: 54.997,
+    lon: -7.307,
+  },
+];
 
 describe("LocationSearch", () => {
   beforeEach(() => {
@@ -14,25 +33,6 @@ describe("LocationSearch", () => {
   });
 
   it("renders input and suggestions correctly", async () => {
-    mockFetchGeoLocFromWeatherAPI.mockResolvedValue([
-      {
-        id: 1,
-        name: "London",
-        region: "England",
-        country: "UK",
-        lat: 51.51,
-        lon: -0.13,
-      },
-      {
-        id: 2,
-        name: "Londonderry",
-        region: "Northern Ireland",
-        country: "UK",
-        lat: 54.997,
-        lon: -7.307,
-      },
-    ]);
-
     const mockOnLocationSelect = jest.fn();
     const { getByPlaceholderText, getByText } = render(
       <LocationSearch onLocationSelect={mockOnLocationSelect} />
@@ -40,16 +40,21 @@ describe("LocationSearch", () => {
 
     const input = getByPlaceholderText("Search for a location");
 
-    fireEvent.changeText(input, "London");
+    await act(async () => {
+      fireEvent.changeText(input, "London");
+    });
 
-    await expect(mockFetchGeoLocFromWeatherAPI).toHaveBeenCalledWith("London");
+    await expect(fetchGeoLocFromWeatherAPI).toHaveBeenCalledWith("London");
 
-    // Wait for suggestions to render
-    expect(await getByText("London")).toBeTruthy();
-    expect(await getByText("Londonderry")).toBeTruthy();
+    await waitFor(() => {
+      // Check that suggestions are rendered
+      expect(getByText("London")).toBeTruthy();
+      expect(getByText("Londonderry")).toBeTruthy();
+    });
 
-    // Select a location
-    fireEvent.press(getByText("London"));
+    await act(async () => {
+      fireEvent.press(getByText("London"));
+    });
 
     expect(mockOnLocationSelect).toHaveBeenCalledWith({
       lat: 51.51,

@@ -7,7 +7,6 @@ import {
 } from "../services/WeatherApiService";
 import {
   getWeatherFromOpenWeather,
-  fetchGeoLocFromOpenWeatherMap,
 } from "../services/OpenWeatherService";
 
 const LocationListMock = [
@@ -79,7 +78,7 @@ describe("App", () => {
     expect(queryByText("20°C")).toBeFalsy();
   });
 
-  it.only("fetches weather from OpenWeather and displays it", async () => {
+  it("fetches weather from OpenWeather and displays it", async () => {
     const { getByPlaceholderText, getByText } = render(<App />);
 
     const toggleButton = getByText("Switch to OpenWeather");
