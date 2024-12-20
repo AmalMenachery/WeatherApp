@@ -5,9 +5,7 @@ import {
   getWeatherFromWeatherAPI,
   fetchGeoLocFromWeatherAPI,
 } from "../services/WeatherApiService";
-import {
-  getWeatherFromOpenWeather,
-} from "../services/OpenWeatherService";
+import { getWeatherFromOpenWeather } from "../services/OpenWeatherService";
 
 const LocationListMock = [
   {
@@ -49,7 +47,9 @@ describe("App", () => {
   });
 
   it("fetches weather from WeatherAPI and displays it", async () => {
-    const { getByPlaceholderText, getByText, queryByText } = render(<App />);
+    const { getByPlaceholderText, getByText, queryByText, findByText } = render(
+      <App />
+    );
 
     const input = getByPlaceholderText("Search for a location");
     const toggleButton = getByText("Switch to OpenWeather");
@@ -57,17 +57,22 @@ describe("App", () => {
     // Simulate entering a location and fetching weather from WeatherAPI
     fireEvent.changeText(input, "London");
 
-    await expect(fetchGeoLocFromWeatherAPI).toHaveBeenCalledWith("London");
+    expect(fetchGeoLocFromWeatherAPI).toHaveBeenCalledWith("London");
 
     // Wait for suggestions to render
-    expect(getByText("London")).toBeTruthy();
-    expect(getByText("Londonderry")).toBeTruthy();
+    expect(await findByText("London")).toBeTruthy();
+    expect(await findByText("Londonderry")).toBeTruthy();
 
     // Select a location
     fireEvent.press(getByText("London"));
 
+    await waitFor(() => {
+      expect(queryByText("Londonderry")).toBeNull();
+    });
+
     expect(getWeatherFromWeatherAPI).toHaveBeenCalledWith(51.51, -0.13);
-    waitFor(() => {
+
+    await waitFor(() => {
       expect(getByText("20°C")).toBeTruthy();
       expect(getByText("Cloudy")).toBeTruthy();
       expect(queryByText("OpenWeather")).toBeFalsy();
@@ -75,11 +80,16 @@ describe("App", () => {
 
     // Switch to OpenWeather and verify no WeatherAPI data
     fireEvent.press(toggleButton);
-    expect(queryByText("20°C")).toBeFalsy();
+    await waitFor(() => {
+      expect(getByText("Switch to Weather API")).toBeTruthy();
+      expect(queryByText("20°C")).toBeFalsy();
+    });
   });
 
   it("fetches weather from OpenWeather and displays it", async () => {
-    const { getByPlaceholderText, getByText } = render(<App />);
+    const { getByPlaceholderText, getByText, queryByText, findByText } = render(
+      <App />
+    );
 
     const toggleButton = getByText("Switch to OpenWeather");
     const input = getByPlaceholderText("Search for a location");
@@ -87,23 +97,27 @@ describe("App", () => {
     // Switch to OpenWeather
     fireEvent.press(toggleButton);
     waitFor(() => {
-      expect(getByText("Switch to WeatherAPI")).toBeTruthy();
+      expect(getByText("Switch to Weather API")).toBeTruthy();
     });
     // Simulate entering a location and fetching weather from OpenWeather
     fireEvent.changeText(input, "London");
 
     // TODO: Switch to OpenWeather GeoFetch
-    await expect(fetchGeoLocFromWeatherAPI).toHaveBeenCalledWith("London");
+    expect(fetchGeoLocFromWeatherAPI).toHaveBeenCalledWith("London");
 
     // Wait for suggestions to render
-    expect(getByText("London")).toBeTruthy();
-    expect(getByText("Londonderry")).toBeTruthy();
+    expect(await findByText("London")).toBeTruthy();
+    expect(await findByText("Londonderry")).toBeTruthy();
 
     // Select a location
     fireEvent.press(getByText("London"));
 
+    await waitFor(() => {
+      expect(queryByText("Londonderry")).toBeNull();
+    });
+
     expect(getWeatherFromOpenWeather).toHaveBeenCalledWith(51.51, -0.13);
-    waitFor(() => {
+    await waitFor(() => {
       expect(getByText("18°C")).toBeTruthy();
       expect(getByText("Rainy")).toBeTruthy();
     });

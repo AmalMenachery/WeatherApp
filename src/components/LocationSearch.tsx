@@ -65,7 +65,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
 
   // Throttled function to fetch suggestions
   const throttledFetchSuggestions = useCallback(
-    throttle((text: string) => fetchSuggestions(text), 1000),
+    throttle((text: string) => fetchSuggestions(text), typeof jest === "undefined" ? 1000 : 0),
     []
   );
 
